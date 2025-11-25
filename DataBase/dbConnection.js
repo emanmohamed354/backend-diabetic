@@ -8,7 +8,7 @@ export const DbConnection = async () => {
         return;
     }
 
-     const mongoUri = process.env.MONGODB_URI || 'mongodb+srv://eman23121:Health263Care.com@cluster0.pefdf.mongodb.net/HealthCare';
+     const mongoUri = process.env.MONGODB_URI ;
     console.log('Connecting to MongoDB with URI:', mongoUri);
 
     try {

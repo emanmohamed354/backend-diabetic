@@ -46,19 +46,17 @@ export const forgetPassword = async (req, res) => {
 export const resetPassword = async (req, res) => {
     const { email, otp, newPassword } = req.body;
 
-    // Find the user by email
     const user = await userModel.findOne({ email });
     
     if (!user) {
         return res.status(404).json({ message: 'User not found' });
     }
 
-    // Check if OTP is valid and not expired
-    if (user.resetPasswordOTP !== otp || user.otpExpiry < Date.now()) {
+    // ✅ Convert otp to number for comparison
+    if (user.resetPasswordOTP !== Number(otp) || user.otpExpiry < Date.now()) {
         return res.status(400).json({ message: 'Invalid or expired OTP' });
     }
 
-    // Hash the new password before saving
     const hashedPassword = await bcrypt.hash(newPassword, 8); 
     user.password = hashedPassword;
     user.resetPasswordOTP = undefined;

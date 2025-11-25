@@ -51,7 +51,7 @@ const userSchema = new mongoose.Schema({
         enum: ['admin', 'user'],
         default: 'user'
     },
-    resetPasswordOTP: { type: String },
+    resetPasswordOTP: { type: Number  },
     otpExpiry: { type: Date },
     wishlist: [{ type: mongoose.SchemaTypes.ObjectId, ref: 'product' }]
 }, {
