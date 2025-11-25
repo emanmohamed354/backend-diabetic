@@ -16,18 +16,17 @@ export const forgetPassword = async (req, res) => {
     user.otpExpiry = otpExpiry;
     await user.save();
     const transporter = nodemailer.createTransport({
-        service: 'Gmail',
-        host: 'smtp.gmail.com',
-        port: 587, 
+        service: process.env.SMTP_SERVICE,
+        host: process.env.SMTP_HOST,
+        port: process.env.SMTP_PORT,
         secure: false,
         auth: {
-            user: 'rosheta950@gmail.com',
-            pass: 'xfne nzbw zdyr dxmz'
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASS
         },
-        tls: {
-            rejectUnauthorized: false
-        }
+        tls: { rejectUnauthorized: false }
     });
+
 
     const mailOptions = {
         from: 'rosheta950@gmail.com',
@@ -114,16 +113,18 @@ export const signIn = async (req, res) => {
             const match = await bcrypt.compare(password, user.password);
             if (match) {
                 let token = jwt.sign({
-                    age: user.age,
-                    email: user.email,
-                    userName: user.userName,
-                    role: user.role,
-                    gender: user.gender,
-                    phone: user.phone,
-                    address: user.address,
-                    lastName: user.lastName, // Include lastName in the token
-                    userId: user._id
-                }, 'ahmedrafat123');
+                age: user.age,
+                email: user.email,
+                userName: user.userName,
+                role: user.role,
+                gender: user.gender,
+                phone: user.phone,
+                address: user.address,
+                lastName: user.lastName,
+                userId: user._id
+            }, process.env.JWT_SECRET, {
+                expiresIn: process.env.JWT_EXPIRES
+            });
                 res.status(201).json({ msg: "success", token });
             } else {
                 res.status(400).json({ msg: "Password Incorrect" });
@@ -144,7 +145,7 @@ export const changeMyPassword = async (req, res) => {
     }
     try {
 
-        const decoded = jwt.verify(token, 'ahmedrafat123');
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
         const userId = decoded.userId;
         const user = await userModel.findById(userId);
         if (!user) {
@@ -178,13 +179,14 @@ function generateToken(user) {
             gender: user.gender,
             phone: user.phone,
             address: user.address,
-            lastName: user.lastName, 
+            lastName: user.lastName,
             userId: user._id
         },
-        'ahmedrafat123',
-        { expiresIn: '9h' }
+        process.env.JWT_SECRET,
+        { expiresIn: process.env.JWT_EXPIRES }
     );
 }
+
 
 export const updateUserData = async (req, res) => {
     const { email, password, userName, age, gender, address, phone, lastName } = req.body;
@@ -245,42 +247,4 @@ export const getUsers = async (req, res) => {
     }
 };
 
-// export const updatePassword = async (req, res) => {
-//   const { email, newPassword } = req.body;
 
-//   // Validate input
-//   if (!email || !newPassword) {
-//     return res.status(400).json({ msg: 'Email and newPassword are required' });
-//   }
-
-//   try {
-//     const user = await userModel.findOne({ email });
-
-//     if (user) {
-//       // Hash the new password
-//       const hashedNewPassword = await bcrypt.hash(newPassword, 10); // Use default salt rounds
-//       user.password = hashedNewPassword;
-
-//       // Save the updated user
-//       await user.save();
-
-//       // Generate a new token
-//       const token = jwt.sign({
-//         age: user.age,
-//         email: user.email,
-//         userName: user.userName,
-//         role: user.role,
-//         gender: user.gender,
-//         phone: user.phone,
-//         address: user.address,
-//         id: user._id
-//       }, 'ahmedrafat123', { expiresIn: '1h' }); // Add token expiration
-
-//       res.status(200).json({ msg: 'Success', token });
-//     } else {
-//       res.status(400).json({ msg: 'Account not found' });
-//     }
-//   } catch (error) {
-//     res.status(500).json({ msg: 'Server error', error: error.message });
-//   }
-// };
