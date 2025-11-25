@@ -18,20 +18,31 @@ app.use(express.json());
 app.use(cors());
 
 app.use((req, res, next) => {
-    console.log(`Request: ${req.method} | ${req.url}`);
+    console.log(`📨 ${req.method} | ${req.url}`);
     next();
+});
+
+// ✅ Health Check Route
+app.get('/health', (req, res) => {
+    res.status(200).json({ status: 'Server is running ✅' });
+});
+
+// Root route
+app.get('/', (req, res) => {
+    res.send('Welcome to the API');
 });
 
 // Routes
 app.use('/users', userRouter);
 
-app.get('/', (req, res) => {
-    res.send('Welcome to the API');
+// 404 handler
+app.use((req, res) => {
+    res.status(404).json({ message: 'Route not found' });
 });
 
 // ✅ Global Error Handler (AFTER all routes)
 app.use((err, req, res, next) => {
-    console.error('Server Error:', err);
+    console.error('❌ Server Error:', err);
     const statusCode = err.statusCode || 500;
     res.status(statusCode).json({
         message: err.message || 'Internal Server Error',
@@ -39,4 +50,6 @@ app.use((err, req, res, next) => {
     });
 });
 
-app.listen(port, () => console.log(`Server running on port ${port}`));
+app.listen(port, () => console.log(`🚀 Server running on port ${port}`));
+
+export default app; 
