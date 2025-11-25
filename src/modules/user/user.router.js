@@ -1,15 +1,22 @@
 import express from 'express';
-import { changeMyPassword, signIn, signUp, updateUserData, forgetPassword, resetPassword } from './user.controller.js';
+import { 
+    changeMyPassword, 
+    signIn, 
+    signUp, 
+    updateUserData, 
+    forgetPassword, 
+    resetPassword,
+    getUsers 
+} from './user.controller.js';
 
-import { getUsers } from './user.controller.js';
-import { catchAsync } from './catchAsync.js';
+const userRouter = express.Router();
 
-userRouter.post('/signUp', catchAsync(signUp));
-userRouter.post('/signIn', catchAsync(signIn));
-userRouter.post('/changeMyPassword', catchAsync(changeMyPassword));
-userRouter.get('/show', catchAsync(getUsers));
-userRouter.put('/updateUserData', catchAsync(updateUserData));
-userRouter.post('/forget-password', catchAsync(forgetPassword));
-userRouter.post('/reset-password', catchAsync(resetPassword));
+userRouter.post('/signUp', signUp);
+userRouter.post('/signIn', signIn);
+userRouter.post('/changeMyPassword', changeMyPassword);
+userRouter.get('/show', getUsers);
+userRouter.put('/updateUserData', updateUserData);
+userRouter.post('/forget-password', forgetPassword);
+userRouter.post('/reset-password', resetPassword);
 
 export default userRouter;

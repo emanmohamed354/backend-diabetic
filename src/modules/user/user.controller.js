@@ -1,7 +1,7 @@
 import bcrypt from 'bcryptjs';
-import jwt from "jsonwebtoken";
+import jwt from 'jsonwebtoken';
 import nodemailer from 'nodemailer';
-import { userModel } from '../../../DataBase/models/user.model.js';  // ✅ FIXED
+import { userModel } from '../../../DataBase/models/user.model.js';
 
 export const forgetPassword = async (req, res) => {
     try {
@@ -11,12 +11,13 @@ export const forgetPassword = async (req, res) => {
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
+
         const otp = Math.floor(100000 + Math.random() * 900000);
-        const otpExpiry = Date.now() + 3600000; 
+        const otpExpiry = Date.now() + 3600000;
         user.resetPasswordOTP = otp;
         user.otpExpiry = otpExpiry;
         await user.save();
-        
+
         const transporter = nodemailer.createTransport({
             service: process.env.SMTP_SERVICE,
             host: process.env.SMTP_HOST,
@@ -30,7 +31,7 @@ export const forgetPassword = async (req, res) => {
         });
 
         const mailOptions = {
-            from: process.env.EMAIL_USER,  // ✅ Use from .env
+            from: process.env.EMAIL_USER,
             to: user.email,
             subject: 'Password Reset OTP',
             text: `Your OTP code is ${otp}. It will expire in 1 hour.`
@@ -38,9 +39,10 @@ export const forgetPassword = async (req, res) => {
 
         transporter.sendMail(mailOptions, (error, info) => {
             if (error) {
-                return res.status(500).json({ message: 'Error sending email', error });
+                console.error('Email error:', error);
+                return res.status(500).json({ message: 'Error sending email' });
             }
-            return res.status(200).json({ message: 'OTP sent successfully' });
+            res.status(200).json({ message: 'OTP sent successfully' });
         });
     } catch (error) {
         console.error('forgetPassword error:', error);
@@ -51,9 +53,8 @@ export const forgetPassword = async (req, res) => {
 export const resetPassword = async (req, res) => {
     try {
         const { email, otp, newPassword } = req.body;
-
         const user = await userModel.findOne({ email });
-        
+
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
@@ -62,13 +63,13 @@ export const resetPassword = async (req, res) => {
             return res.status(400).json({ message: 'Invalid or expired OTP' });
         }
 
-        const hashedPassword = await bcrypt.hash(newPassword, 8); 
+        const hashedPassword = await bcrypt.hash(newPassword, 8);
         user.password = hashedPassword;
         user.resetPasswordOTP = undefined;
         user.otpExpiry = undefined;
         await user.save();
 
-        return res.status(200).json({ message: 'Password reset successfully' });
+        res.status(200).json({ message: 'Password reset successfully' });
     } catch (error) {
         console.error('resetPassword error:', error);
         res.status(500).json({ message: 'Server error', error: error.message });
@@ -89,7 +90,7 @@ export const signUp = async (req, res) => {
         }
 
         const hashedPassword = await bcrypt.hash(password, 8);
-        
+
         await userModel.create({
             userName,
             lastName,
@@ -101,6 +102,7 @@ export const signUp = async (req, res) => {
             phone,
             role
         });
+
         res.status(201).json({ msg: 'User created successfully' });
     } catch (error) {
         console.error('signUp error:', error);
@@ -112,17 +114,17 @@ export const signIn = async (req, res) => {
     try {
         const { email, password } = req.body;
         const user = await userModel.findOne({ email });
-        
+
         if (!user) {
-            return res.status(400).json({ msg: "Account Not Found" });
+            return res.status(400).json({ msg: 'Account Not Found' });
         }
 
         const match = await bcrypt.compare(password, user.password);
         if (!match) {
-            return res.status(400).json({ msg: "Password Incorrect" });
+            return res.status(400).json({ msg: 'Password Incorrect' });
         }
 
-        let token = jwt.sign({
+        const token = jwt.sign({
             age: user.age,
             email: user.email,
             userName: user.userName,
@@ -136,7 +138,7 @@ export const signIn = async (req, res) => {
             expiresIn: process.env.JWT_EXPIRES
         });
 
-        res.status(200).json({ msg: "success", token });
+        res.status(200).json({ msg: 'success', token });
     } catch (error) {
         console.error('signIn error:', error);
         res.status(500).json({ msg: 'Server error', error: error.message });
@@ -149,13 +151,12 @@ export const changeMyPassword = async (req, res) => {
         const token = req.headers.token;
 
         if (!token) {
-            return res.status(401).json({ msg: 'No token provided, authorization denied' });
+            return res.status(401).json({ msg: 'No token provided' });
         }
 
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        const userId = decoded.userId;
-        const user = await userModel.findById(userId);
-        
+        const user = await userModel.findById(decoded.userId);
+
         if (!user) {
             return res.status(404).json({ msg: 'User not found' });
         }
@@ -166,11 +167,10 @@ export const changeMyPassword = async (req, res) => {
         }
 
         if (newPassword !== confirmNewPassword) {
-            return res.status(400).json({ msg: 'New passwords do not match' });
+            return res.status(400).json({ msg: 'Passwords do not match' });
         }
 
-        const hashedNewPassword = await bcrypt.hash(newPassword, 8);
-        user.password = hashedNewPassword;
+        user.password = await bcrypt.hash(newPassword, 8);
         await user.save();
 
         res.status(200).json({ msg: 'Password changed successfully' });
@@ -201,8 +201,8 @@ function generateToken(user) {
 export const updateUserData = async (req, res) => {
     try {
         const { email, password, userName, age, gender, address, phone, lastName } = req.body;
-
         const user = await userModel.findOne({ email });
+
         if (!user) {
             return res.status(404).json({ msg: 'User not found' });
         }
@@ -221,20 +221,18 @@ export const updateUserData = async (req, res) => {
         if (phone) updatedFields.phone = phone;
 
         await userModel.updateOne({ email }, { $set: updatedFields });
-
         const updatedUser = await userModel.findOne({ email });
-        const newToken = generateToken(updatedUser);
 
         res.status(200).json({
             msg: 'User updated successfully',
-            token: newToken,
+            token: generateToken(updatedUser),
             user: updatedUser
         });
     } catch (error) {
         console.error('updateUserData error:', error);
         res.status(500).json({ msg: 'Server error', error: error.message });
     }
-}
+};
 
 export const getUsers = async (req, res) => {
     try {

@@ -1,10 +1,11 @@
-import mongoose from "mongoose";
+import mongoose from 'mongoose';
+
 const userSchema = new mongoose.Schema({
     userName: {
         type: String,
         required: true
     },
-    lastName:{
+    lastName: {
         type: String,
         required: true
     },
@@ -18,7 +19,8 @@ const userSchema = new mongoose.Schema({
     },
     email: {
         type: String,
-        required: true
+        required: true,
+        unique: true
     },
     age: {
         type: Number,
@@ -28,34 +30,22 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    address: { 
-        street: {
-            type: String,
-            required: true
-        },
-        city: {
-            type: String,
-            required: true
-        },
-        state: {
-            type: String,
-            required: true
-        },
-        country: {
-            type: String,
-            required: true
-        }
+    address: {
+        street: String,
+        city: String,
+        state: String,
+        country: String
     },
     role: {
         type: String,
         enum: ['admin', 'user'],
         default: 'user'
     },
-    resetPasswordOTP: { type: Number  },
+    resetPasswordOTP: { type: Number },
     otpExpiry: { type: Date },
     wishlist: [{ type: mongoose.SchemaTypes.ObjectId, ref: 'product' }]
 }, {
     timestamps: true
 });
-export const userModel=mongoose.model('user',userSchema)  
 
+export const userModel = mongoose.model('user', userSchema);
